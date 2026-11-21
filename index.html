@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#080b12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="poker chance" />
+  <title>poker chance</title>
+  <link id="apple-touch-icon-link" rel="apple-touch-icon" sizes="180x180" />
+  <link id="pwa-manifest-link" rel="manifest" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --felt-center: #163b5c;
+      --felt-mid: #0e273e;
+      --felt-edge: #071524;
+      --gold-accent: #f5c451;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 50% 20%, #161b26 0%, #090b10 100%);
+      color: #f8fafc;
+      font-family: 'Noto Sans JP', 'Inter', sans-serif;
+      height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 460px;
+      height: 100dvh;
+      max-height: 940px;
+      background: linear-gradient(180deg, #0d131f 0%, #080b12 100%);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .bg-suit-pattern {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .poker-table-outer {
+      position: relative;
+      width: 92%;
+      height: 100%;
+      margin: 0 auto;
+      border-radius: 150px;
+      padding: 11px;
+      background: linear-gradient(145deg, #dfd8ca 0%, #b5ab99 45%, #7d7364 100%);
+      box-shadow:
+        0 20px 42px rgba(0, 0, 0, 0.78),
+        inset 0 2px 3px rgba(255, 255, 255, 0.7),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.55);
+    }
+
+    .poker-table-inner-rail {
+      width: 100%;
+      height: 100%;
+      border-radius: 140px;
+      padding: 4px;
+      background: linear-gradient(180deg, #27231e 0%, #12100e 100%);
+      box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.9);
+    }
+
+    .poker-table-felt {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 136px;
+      background:
+        radial-gradient(ellipse at 50% 48%, var(--felt-center) 0%, var(--felt-mid) 62%, var(--felt-edge) 100%);
+      box-shadow:
+        inset 0 0 38px rgba(0, 0, 0, 0.85),
+        inset 0 0 8px rgba(0, 0, 0, 0.95);
+      overflow: hidden;
+    }
+
+    .poker-table-felt::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.16;
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.04) 0px,
+        rgba(255, 255, 255, 0.04) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+    }
+
+    .betting-line {
+      position: absolute;
+      inset: 12px;
+      border-radius: 124px;
+      border: 1.5px solid rgba(255, 255, 255, 0.11);
+      pointer-events: none;
+    }
+
+    .playing-card {
+      background: linear-gradient(160deg, #ffffff 0%, #f3f5f8 70%, #e4e8ef 100%);
+      border-radius: 7px;
+      box-shadow:
+        0 5px 12px rgba(0, 0, 0, 0.55),
+        0 1px 2px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      border: 1px solid #cbd5e1;
+      position: relative;
+      transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
+    }
+
+    .playing-card:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 9px 18px rgba(0, 0, 0, 0.65);
+    }
+
+    .card-slot {
+      border-radius: 8px;
+      border: 1.5px dashed rgba(255, 255, 255, 0.32);
+      background: rgba(5, 14, 24, 0.48);
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.65);
+      transition: all 0.18s ease;
+      position: relative;
+    }
+
+    .card-slot.active-target {
+      border-color: #f5c451;
+      border-style: solid;
+      background: rgba(245, 196, 81, 0.18);
+      box-shadow: 0 0 14px rgba(245, 196, 81, 0.45), inset 0 0 8px rgba(245, 196, 81, 0.25);
+    }
+
+    .card-slot.drag-over {
+      transform: scale(1.08);
+      border-color: #38bdf8;
+      border-style: solid;
+      background: rgba(56, 189, 248, 0.25);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.6);
+    }
+
+    .poker-chip {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7.5px;
+      font-weight: 900;
+      box-shadow: 0 2px 0 #1e293b, 0 4px 6px rgba(0, 0, 0, 0.6);
+      border: 2px dashed rgba(255, 255, 255, 0.85);
+    }
+
+    .dealer-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fffbeb 0%, #f59e0b 65%, #b45309 100%);
+      color: #1e1b18;
+      font-weight: 900;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.65), inset 0 1px 2px #ffffff;
+      border: 1.5px solid #fef3c7;
+    }
+
+    .action-btn {
+      transition: all 0.15s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-btn:active {
+      transform: translateY(2px);
+    }
+
+    .recommended-glow {
+      box-shadow: 0 0 20px rgba(245, 196, 81, 0.55), 0 0 0 2px #f5c451 !important;
+      animation: pulseGold 2s infinite;
+    }
+
+    @keyframes pulseGold {
+      0%, 100% { box-shadow: 0 0 16px rgba(245, 196, 81, 0.45), 0 0 0 2px #f5c451; }
+      50% { box-shadow: 0 0 26px rgba(245, 196, 81, 0.8), 0 0 0 2.5px #fde047; }
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-suit-pattern">
+
+  <div class="app-shell" id="app">
+    <header class="px-3.5 py-2 flex items-center justify-between border-b border-white/10 bg-slate-950/85 backdrop-blur-md z-20 shrink-0">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shadow-amber-500/20">
+          <span class="text-slate-950 font-black text-sm">♠</span>
+        </div>
+        <div>
+          <div class="text-sm font-black text-white tracking-tight lowercase leading-none">poker chance</div>
+          <div class="text-[9px] font-bold tracking-wider text-amber-400 uppercase mt-0.5">HEADS-UP ANALYZER</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-white/10">
+        <span class="text-[10px] font-bold text-slate-400 pl-1.5">自分:</span>
+        <button id="btn-pos-sb" onclick="setHeroPosition('SB')"
+          class="px-2.5 py-1 rounded-lg text-xs font-black transition-all bg-amber-500 text-slate-950 shadow">
+          SB (BTN)
+        </button>
+        <button id="btn-pos-bb" onclick="setHeroPosition('BB')"
+          class="px-2.5 py-1 rounded-lg text-xs font-black transition-all text-slate-300 hover:text-white">
+          BB
+        </button>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button onclick="resetAllCards()" title="リセット"
+          class="w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-white/10 flex items-center justify-center text-slate-300 text-xs font-bold">
+          ↺
+        </button>
+        <button onclick="toggleApiModal()" title="Gemini API連携設定"
+          class="w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-white/10 flex items-center justify-center text-amber-400 text-xs">
+          ⚙
+        </button>
+      </div>
+    </header>
+
+    <main class="relative flex-1 flex flex-col justify-between py-2 px-1 min-h-0">
+      <div class="poker-table-outer flex-1 flex flex-col min-h-0">
+        <div class="poker-table-inner-rail">
+          <div class="poker-table-felt flex flex-col justify-between py-4 px-3">
+            <div class="betting-line"></div>
+
+            <!-- 相手（VILLAIN） -->
+            <div class="relative z-10 flex flex-col items-center pt-1">
+              <div class="flex items-center gap-2.5">
+                <div class="relative shrink-0">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-b from-slate-700 to-slate-900 border-2 border-rose-400/80 shadow-lg flex items-center justify-center">
+                    <span class="text-base">🕶️</span>
+                  </div>
+                  <span id="villain-pos-badge"
+                    class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full text-[8.5px] font-black bg-rose-600 text-white border border-rose-300 shadow whitespace-nowrap">
+                    BB
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-1.5" id="villain-hand-slots">
+                  <div class="card-slot w-12 h-[66px] flex flex-col items-center justify-center cursor-pointer"
+                    data-slot="v0" onclick="selectSlot('v0')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'v0')">
+                    <span class="text-[9px] text-white/55 font-bold">相手1</span>
+                  </div>
+                  <div class="card-slot w-12 h-[66px] flex flex-col items-center justify-center cursor-pointer"
+                    data-slot="v1" onclick="selectSlot('v1')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'v1')">
+                    <span class="text-[9px] text-white/55 font-bold">相手2</span>
+                  </div>
+                </div>
+
+                <div class="bg-slate-950/85 border border-white/15 rounded-md px-2 py-1 text-center shadow shrink-0">
+                  <div class="text-[8px] text-slate-400 font-bold leading-tight">VILLAIN</div>
+                  <div class="font-mono-num text-[11px] font-extrabold text-white" id="villain-stack-label">25.0bb</div>
+                </div>
+              </div>
+
+              <div class="mt-1.5 flex items-center gap-2 h-5">
+                <div id="villain-dealer-btn" class="dealer-btn hidden">D</div>
+                <div class="flex items-center gap-1 bg-black/45 px-2 py-0.5 rounded-full border border-white/10">
+                  <span class="poker-chip bg-rose-600 text-white" id="villain-blind-chip">1</span>
+                  <span class="font-mono-num text-[10px] font-bold text-slate-200" id="villain-blind-text">1.0 bb</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 中央（POT・ボード） -->
+            <div class="relative z-10 flex flex-col items-center my-auto">
+              <div class="flex items-center gap-2 mb-2">
+                <span id="street-badge" class="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-black tracking-wider">
+                  PREFLOP
+                </span>
+                <div class="flex items-center gap-1.5 bg-slate-950/85 border border-amber-400/30 px-3 py-0.5 rounded-full shadow-inner">
+                  <span class="text-[10px] font-bold text-amber-400">POT</span>
+                  <span class="font-mono-num text-xs font-black text-white" id="pot-display">1.5 bb</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-center gap-1.5 px-1">
+                <div class="card-slot w-12 h-[66px] flex flex-col items-center justify-center cursor-pointer"
+                  data-slot="b0" onclick="selectSlot('b0')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'b0')">
+                  <span class="text-[8px] text-white/40 font-bold">FLOP</span>
+                </div>
+                <div class="card-slot w-12 h-[66px] flex flex-col items-center justify-center cursor-pointer"
+                  data-slot="b1" onclick="selectSlot('b1')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'b1')">
+                  <span class="text-[8px] text-white/40 font-bold">FLOP</span>
+                </div>
+                <div class="card-slot w-12 h-[66px] flex flex-col items-center justify-center cursor-pointer"
+                  data-slot="b2" onclick="selectSlot('b2')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'b2')">
+                  <span class="text-[8px] text-white/40 font-bold">FLOP</span>
+                </div>
+                <div class="card-slot w-12 h-[66px] flex flex-col items-center justify-center cursor-pointer ml-0.5"
+                  data-slot="b3" onclick="selectSlot('b3')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'b3')">
+                  <span class="text-[8px] text-sky-300/50 font-bold">TURN</span>
+                </div>
+                <div class="card-slot w-12 h-[66px] flex flex-col items-center justify-center cursor-pointer"
+                  data-slot="b4" onclick="selectSlot('b4')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'b4')">
+                  <span class="text-[8px] text-emerald-300/50 font-bold">RIVER</span>
+                </div>
+              </div>
+
+              <div class="mt-2 flex items-center gap-2">
+                <div id="hero-made-hand" class="px-2.5 py-0.5 rounded-full bg-slate-950/80 border border-white/10 text-[10px] font-bold text-slate-300">
+                  カードを配置して解析
+                </div>
+                <div id="equity-pill" class="hidden px-2.5 py-0.5 rounded-full bg-emerald-950/95 border border-emerald-400/50 text-[11px] font-mono-num font-black text-emerald-300 shadow">
+                  勝率 --.-%
+                </div>
+              </div>
+
+              <div class="mt-2 px-3 py-1 rounded-full bg-black/40 border border-white/10 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                <span class="text-[10px] font-black tracking-[0.14em] text-white/85">
+                  トーナメント ｜ ヘッズアップ (1 vs 1)
+                </span>
+              </div>
+            </div>
+
+            <!-- 自分（HERO） -->
+            <div class="relative z-10 flex flex-col items-center pb-1">
+              <div class="mb-1.5 flex items-center gap-2 h-5">
+                <div id="hero-dealer-btn" class="dealer-btn">D</div>
+                <div class="flex items-center gap-1 bg-black/45 px-2 py-0.5 rounded-full border border-white/10">
+                  <span class="poker-chip bg-amber-500 text-slate-950" id="hero-blind-chip">0.5</span>
+                  <span class="font-mono-num text-[10px] font-bold text-amber-200" id="hero-blind-text">0.5 bb</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2.5">
+                <div class="flex flex-col items-center shrink-0">
+                  <div class="relative">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-b from-amber-400 to-amber-700 p-0.5 shadow-lg">
+                      <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-base">
+                        🔥
+                      </div>
+                    </div>
+                    <span id="hero-pos-badge"
+                      class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full text-[8.5px] font-black bg-amber-500 text-slate-950 border border-amber-200 shadow whitespace-nowrap">
+                      SB / BTN
+                    </span>
+                  </div>
+                  <button onclick="cycleEffectiveStack()" title="タップで有効スタックBBを変更"
+                    class="mt-2 bg-slate-950/90 hover:bg-slate-900 border border-amber-400/40 rounded-md px-1.5 py-0.5 text-center shadow transition">
+                    <div class="text-[7.5px] text-amber-400 font-bold leading-none">STACK ↻</div>
+                    <div class="font-mono-num text-[10.5px] font-black text-white" id="hero-stack-label">25.0bb</div>
+                  </button>
+                </div>
+
+                <div class="flex items-center gap-2" id="hero-hand-slots">
+                  <div class="card-slot active-target w-13 h-[74px] flex flex-col items-center justify-center cursor-pointer px-2"
+                    data-slot="h0" onclick="selectSlot('h0')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'h0')">
+                    <span class="text-[10px] text-amber-300/90 font-black">自分1</span>
+                    <span class="text-[8px] text-white/45">TAP / D&D</span>
+                  </div>
+                  <div class="card-slot w-13 h-[74px] flex flex-col items-center justify-center cursor-pointer px-2"
+                    data-slot="h1" onclick="selectSlot('h1')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'h1')">
+                    <span class="text-[10px] text-amber-300/90 font-black">自分2</span>
+                    <span class="text-[8px] text-white/45">TAP / D&D</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <section class="bg-slate-950/95 border-t border-white/15 px-3 pt-2 pb-2.5 z-20 flex flex-col gap-2 shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+      <div class="bg-slate-900/90 rounded-xl p-1.5 border border-white/10">
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-1" id="suit-tabs">
+            <button onclick="setActiveSuit('s')" data-suit="s" class="suit-tab px-2 py-0.5 rounded-md text-[11px] font-black bg-slate-700 text-white border border-white/20">♠ スペード</button>
+            <button onclick="setActiveSuit('h')" data-suit="h" class="suit-tab px-2 py-0.5 rounded-md text-[11px] font-black bg-slate-800/70 text-rose-400">♥ ハート</button>
+            <button onclick="setActiveSuit('d')" data-suit="d" class="suit-tab px-2 py-0.5 rounded-md text-[11px] font-black bg-slate-800/70 text-sky-400">♦ ダイヤ</button>
+            <button onclick="setActiveSuit('c')" data-suit="c" class="suit-tab px-2 py-0.5 rounded-md text-[11px] font-black bg-slate-800/70 text-emerald-400">♣ クラブ</button>
+          </div>
+          <button id="btn-open-ai-result" onclick="analyzeAndOpenResultModal()"
+            class="px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-[11px] shadow-md active:scale-95 transition flex items-center gap-1">
+            <span>✦ AI解析</span>
+          </button>
+        </div>
+
+        <div id="card-deck-strip" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5"></div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <button id="act-fold" class="action-btn rounded-xl py-2 px-2 bg-gradient-to-b from-sky-600 to-sky-800 border border-sky-400/40 flex flex-col items-center justify-center shadow-lg opacity-75">
+          <span class="text-[8.5px] font-black tracking-wider text-sky-200 uppercase" id="badge-fold">OPTION</span>
+          <span class="text-xs font-black text-white">フォールド</span>
+          <span class="font-mono-num text-[10px] font-bold text-sky-200/80">0 bb</span>
+        </button>
+
+        <button id="act-call" class="action-btn rounded-xl py-2 px-2 bg-gradient-to-b from-emerald-600 to-emerald-800 border border-emerald-400/40 flex flex-col items-center justify-center shadow-lg opacity-75">
+          <span class="text-[8.5px] font-black tracking-wider text-emerald-200 uppercase" id="badge-call">OPTION</span>
+          <span class="text-xs font-black text-white" id="label-call">コール</span>
+          <span class="font-mono-num text-[10px] font-bold text-emerald-200" id="bb-call">1.0 bb</span>
+        </button>
+
+        <button id="act-raise" class="action-btn rounded-xl py-2 px-2 bg-gradient-to-b from-rose-600 to-rose-800 border border-rose-400/40 flex flex-col items-center justify-center shadow-lg opacity-75">
+          <span class="text-[8.5px] font-black tracking-wider text-rose-200 uppercase" id="badge-raise">OPTION</span>
+          <span class="text-xs font-black text-white" id="label-raise">レイズ</span>
+          <span class="font-mono-num text-[11px] font-black text-amber-300" id="bb-raise">2.5 bb</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- AI解析結果モーダル -->
+    <div id="result-modal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md z-40 flex flex-col justify-between p-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-black" id="modal-engine-status">
+            GEMINI AI ANALYSIS
+          </span>
+          <span class="text-xs font-bold text-slate-400" id="modal-street-label">PREFLOP</span>
+        </div>
+        <button onclick="closeResultModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-white font-black text-sm flex items-center justify-center">
+          ✕
+        </button>
+      </div>
+
+      <div class="my-auto flex flex-col items-center gap-5 py-4">
+        <div class="w-full bg-slate-900/90 border border-white/10 rounded-2xl p-3 flex items-center justify-around">
+          <div class="text-center">
+            <div class="text-[10px] font-black text-amber-400 mb-1" id="modal-hero-pos">HERO (SB)</div>
+            <div class="font-mono-num text-lg font-black text-white" id="modal-hero-cards">-- --</div>
+          </div>
+          <div class="text-xs font-black text-slate-500">VS</div>
+          <div class="text-center">
+            <div class="text-[10px] font-black text-rose-400 mb-1" id="modal-villain-pos">VILLAIN (BB)</div>
+            <div class="font-mono-num text-lg font-black text-white" id="modal-villain-cards">-- --</div>
+          </div>
+        </div>
+
+        <div class="w-full bg-gradient-to-b from-emerald-950/80 to-slate-900 border border-emerald-400/40 rounded-2xl p-5 text-center shadow-xl">
+          <div class="text-xs font-black tracking-widest text-emerald-300 uppercase mb-1">WIN PROBABILITY（勝率）</div>
+          <div class="font-mono-num text-5xl font-black text-white tracking-tight" id="modal-winrate">
+            --.-<span class="text-2xl text-emerald-400">%</span>
+          </div>
+          <div class="mt-2 w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+            <div id="modal-winrate-bar" class="h-full bg-gradient-to-r from-emerald-500 to-amber-400 transition-all duration-500" style="width: 50%"></div>
+          </div>
+        </div>
+
+        <div class="w-full bg-slate-900 border-2 border-amber-400 rounded-2xl p-4 text-center shadow-[0_0_25px_rgba(245,196,81,0.25)]">
+          <div class="text-[10px] font-black tracking-widest text-amber-400 uppercase mb-1">RECOMMENDED ACTION</div>
+          <div class="text-2xl font-black text-white" id="modal-rec-action">レイズ</div>
+          <div class="font-mono-num text-xl font-black text-amber-300 mt-0.5" id="modal-rec-bb">2.2 bb</div>
+        </div>
+      </div>
+
+      <button onclick="closeResultModal()"
+        class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/15 text-white font-black text-sm">
+        テーブルに戻る
+      </button>
+    </div>
+
+    <!-- Gemini API KEY MODAL -->
+    <div id="api-modal" class="hidden absolute inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-slate-900 border border-white/15 rounded-2xl p-4 w-full max-w-sm shadow-2xl">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-black text-white">Gemini API 連携設定</h3>
+          <button onclick="toggleApiModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+        </div>
+        <p class="text-[11px] text-slate-300 leading-relaxed mb-3">
+          Google AI Studioで取得したGemini APIキーを入力すると、Geminiモデルとリアルタイム連携して推奨アクションとBBサイズを判定します。
+        </p>
+        <input id="gemini-api-key-input" type="password" placeholder="AIzaSy..."
+          class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-white/15 text-xs text-white font-mono-num mb-3 focus:outline-none focus:border-amber-400" />
+        <div class="flex justify-end gap-2">
+          <button onclick="saveApiKey()" class="px-4 py-1.5 rounded-lg bg-amber-500 text-slate-950 text-xs font-black">
+            保存して閉じる
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // コードだけで金色スペード（♠）のアイコン画像を生成し、PWA & iOSアイコンに設定
+    function createGoldSpadeIconDataUrl(size = 512) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // ダーク背景グラデーション
+      const bgGrad = ctx.createLinearGradient(0, 0, size, size);
+      bgGrad.addColorStop(0, '#131b2b');
+      bgGrad.addColorStop(1, '#070a10');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, size, size);
+
+      // 淡いゴールドの枠線
+      ctx.strokeStyle = 'rgba(245, 196, 81, 0.35)';
+      ctx.lineWidth = size * 0.03;
+      ctx.strokeRect(size * 0.06, size * 0.06, size * 0.88, size * 0.88);
+
+      // 金色グラデーションでスペードを描画
+      const goldGrad = ctx.createLinearGradient(0, size * 0.16, 0, size * 0.86);
+      goldGrad.addColorStop(0, '#fde68a');
+      goldGrad.addColorStop(0.5, '#f59e0b');
+      goldGrad.addColorStop(1, '#b45309');
+
+      ctx.save();
+      ctx.translate(size * 0.5, size * 0.48);
+      const s = size * 0.0032;
+      ctx.scale(s, s);
+
+      ctx.fillStyle = goldGrad;
+      ctx.shadowColor = 'rgba(245, 158, 11, 0.45)';
+      ctx.shadowBlur = 24;
+
+      ctx.beginPath();
+      ctx.moveTo(0, -95);
+      ctx.bezierCurveTo(-18, -72, -88, -22, -88, 26);
+      ctx.bezierCurveTo(-88, 62, -56, 82, -26, 72);
+      ctx.bezierCurveTo(-14, 68, -8, 62, -6, 56);
+      ctx.bezierCurveTo(-8, 76, -18, 94, -36, 106);
+      ctx.lineTo(36, 106);
+      ctx.bezierCurveTo(18, 94, 8, 76, 6, 56);
+      ctx.bezierCurveTo(8, 62, 14, 68, 26, 72);
+      ctx.bezierCurveTo(56, 82, 88, 62, 88, 26);
+      ctx.bezierCurveTo(88, -22, 18, -72, 0, -95);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      return canvas.toDataURL('image/png');
+    }
+
+    (function setupPwaAndIcon() {
+      const icon180 = createGoldSpadeIconDataUrl(180);
+      const icon512 = createGoldSpadeIconDataUrl(512);
+
+      const appleIconLink = document.getElementById('apple-touch-icon-link');
+      if (appleIconLink) appleIconLink.href = icon180;
+
+      const manifest = {
+        name: "poker chance",
+        short_name: "poker chance",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#080b12",
+        theme_color: "#080b12",
+        orientation: "portrait",
+        icons: [
+          {
+            src: icon180,
+            sizes: "180x180",
+            type: "image/png"
+          },
+          {
+            src: icon512,
+            sizes: "512x512",
+            type: "image/png"
+          }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.getElementById("pwa-manifest-link");
+      if (link) link.href = url;
+    })();
+
+    const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+    const RANK_VAL = { '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, 'T':10, 'J':11, 'Q':12, 'K':13, 'A':14 };
+    const SUITS = {
+      s: { symbol: '♠', color: 'text-slate-900', name: 'スペード' },
+      h: { symbol: '♥', color: 'text-rose-600', name: 'ハート' },
+      d: { symbol: '♦', color: 'text-sky-600', name: 'ダイヤ' },
+      c: { symbol: '♣', color: 'text-emerald-600', name: 'クラブ' }
+    };
+
+    const SLOT_ORDER = ['h0', 'h1', 'v0', 'v1', 'b0', 'b1', 'b2', 'b3', 'b4'];
+    const STACK_OPTIONS = [10, 15, 20, 25, 40, 60];
+
+    let state = {
+      heroPos: 'SB',
+      effStackIndex: 3,
+      activeSuit: 's',
+      selectedSlot: 'h0',
+      slots: {
+        h0: null, h1: null,
+        v0: null, v1: null,
+        b0: null, b1: null, b2: null, b3: null, b4: null
+      },
+      geminiApiKey: localStorage.getItem('hu_gemini_api_key') || '',
+      lastResult: null
+    };
+
+    function init() {
+      document.getElementById('gemini-api-key-input').value = state.geminiApiKey;
+      renderDeckStrip();
+      updatePositionUI();
+      renderAllSlots();
+    }
+
+    function setHeroPosition(pos) {
+      state.heroPos = pos;
+      updatePositionUI();
+      if (state.slots.h0 && state.slots.h1 && state.slots.v0 && state.slots.v1) {
+        computeStrategy();
+      }
+    }
+
+    function cycleEffectiveStack() {
+      state.effStackIndex = (state.effStackIndex + 1) % STACK_OPTIONS.length;
+      const bb = STACK_OPTIONS[state.effStackIndex].toFixed(1) + 'bb';
+      document.getElementById('hero-stack-label').textContent = bb;
+      document.getElementById('villain-stack-label').textContent = bb;
+      if (state.slots.h0 && state.slots.h1 && state.slots.v0 && state.slots.v1) {
+        computeStrategy();
+      }
+    }
+
+    function updatePositionUI() {
+      const isSB = state.heroPos === 'SB';
+      const btnSb = document.getElementById('btn-pos-sb');
+      const btnBb = document.getElementById('btn-pos-bb');
+
+      if (isSB) {
+        btnSb.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all bg-amber-500 text-slate-950 shadow';
+        btnBb.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all text-slate-300 hover:text-white';
+        document.getElementById('hero-pos-badge').textContent = 'SB / BTN';
+        document.getElementById('villain-pos-badge').textContent = 'BB';
+        document.getElementById('hero-dealer-btn').classList.remove('hidden');
+        document.getElementById('villain-dealer-btn').classList.add('hidden');
+        document.getElementById('hero-blind-chip').textContent = '0.5';
+        document.getElementById('hero-blind-text').textContent = '0.5 bb';
+        document.getElementById('villain-blind-chip').textContent = '1';
+        document.getElementById('villain-blind-text').textContent = '1.0 bb';
+      } else {
+        btnBb.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all bg-amber-500 text-slate-950 shadow';
+        btnSb.className = 'px-2.5 py-1 rounded-lg text-xs font-black transition-all text-slate-300 hover:text-white';
+        document.getElementById('hero-pos-badge').textContent = 'BB';
+        document.getElementById('villain-pos-badge').textContent = 'SB / BTN';
+        document.getElementById('hero-dealer-btn').classList.add('hidden');
+        document.getElementById('villain-dealer-btn').classList.remove('hidden');
+        document.getElementById('hero-blind-chip').textContent = '1';
+        document.getElementById('hero-blind-text').textContent = '1.0 bb';
+        document.getElementById('villain-blind-chip').textContent = '0.5';
+        document.getElementById('villain-blind-text').textContent = '0.5 bb';
+      }
+    }
+
+    function setActiveSuit(suit) {
+      state.activeSuit = suit;
+      document.querySelectorAll('.suit-tab').forEach(btn => {
+        const s = btn.dataset.suit;
+        if (s === suit) {
+          btn.classList.add('bg-slate-700', 'border', 'border-white/30');
+          btn.classList.remove('bg-slate-800/70');
+        } else {
+          btn.classList.remove('bg-slate-700', 'border', 'border-white/30');
+          btn.classList.add('bg-slate-800/70');
+        }
+      });
+      renderDeckStrip();
+    }
+
+    function getUsedCards() {
+      return new Set(Object.values(state.slots).filter(Boolean));
+    }
+
+    function renderDeckStrip() {
+      const container = document.getElementById('card-deck-strip');
+      container.innerHTML = '';
+      const used = getUsedCards();
+      const sInfo = SUITS[state.activeSuit];
+
+      RANKS.forEach(rank => {
+        const code = rank + state.activeSuit;
+        const isUsed = used.has(code);
+        const cardEl = document.createElement('div');
+        cardEl.className = `playing-card shrink-0 w-9 h-13 flex flex-col items-center justify-between p-1 cursor-grab active:cursor-grabbing ${isUsed ? 'opacity-25 pointer-events-none grayscale' : ''}`;
+        cardEl.draggable = !isUsed;
+
+        cardEl.innerHTML = `
+          <div class="w-full flex justify-start leading-none">
+            <span class="font-mono-num text-[11px] font-black ${sInfo.color}">${rank}</span>
+          </div>
+          <div class="text-sm leading-none ${sInfo.color}">${sInfo.symbol}</div>
+          <div class="w-full flex justify-end leading-none">
+            <span class="text-[7px] font-bold ${sInfo.color}">${sInfo.symbol}</span>
+          </div>
+        `;
+
+        cardEl.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', code);
+        });
+
+        cardEl.addEventListener('click', () => {
+          if (!isUsed && state.selectedSlot) {
+            assignCardToSlot(state.selectedSlot, code);
+          }
+        });
+
+        container.appendChild(cardEl);
+      });
+    }
+
+    function selectSlot(slotKey) {
+      if (state.slots[slotKey]) {
+        state.slots[slotKey] = null;
+        state.selectedSlot = slotKey;
+        renderAllSlots();
+        renderDeckStrip();
+        updateStreetAndHandStatus();
+        return;
+      }
+      state.selectedSlot = slotKey;
+      renderAllSlots();
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e, slotKey) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      const cardCode = e.dataTransfer.getData('text/plain');
+      if (cardCode) {
+        assignCardToSlot(slotKey, cardCode);
+      }
+    }
+
+    function assignCardToSlot(slotKey, cardCode) {
+      for (const k of SLOT_ORDER) {
+        if (state.slots[k] === cardCode) state.slots[k] = null;
+      }
+      state.slots[slotKey] = cardCode;
+
+      const idx = SLOT_ORDER.indexOf(slotKey);
+      let nextSlot = null;
+      for (let i = 1; i <= SLOT_ORDER.length; i++) {
+        const candidate = SLOT_ORDER[(idx + i) % SLOT_ORDER.length];
+        if (!state.slots[candidate]) {
+          nextSlot = candidate;
+          break;
+        }
+      }
+      state.selectedSlot = nextSlot;
+
+      renderAllSlots();
+      renderDeckStrip();
+      updateStreetAndHandStatus();
+
+      if (state.slots.h0 && state.slots.h1 && state.slots.v0 && state.slots.v1) {
+        computeStrategy();
+      }
+    }
+
+    function renderAllSlots() {
+      SLOT_ORDER.forEach(slotKey => {
+        const el = document.querySelector(`[data-slot="${slotKey}"]`);
+        const code = state.slots[slotKey];
+        el.classList.toggle('active-target', state.selectedSlot === slotKey);
+
+        if (code) {
+          const rank = code[0];
+          const suit = code[1];
+          const sInfo = SUITS[suit];
+          el.innerHTML = `
+            <div class="playing-card w-full h-full flex flex-col items-center justify-between p-1">
+              <div class="w-full flex justify-start leading-none">
+                <span class="font-mono-num text-xs font-black ${sInfo.color}">${rank}</span>
+              </div>
+              <div class="text-base leading-none ${sInfo.color}">${sInfo.symbol}</div>
+              <div class="w-full flex justify-end leading-none">
+                <span class="text-[8px] font-bold ${sInfo.color}">${sInfo.symbol}</span>
+              </div>
+            </div>
+          `;
+        } else {
+          const labels = {
+            h0: '<span class="text-[10px] text-amber-300/90 font-black">自分1</span><span class="text-[8px] text-white/45">TAP / D&D</span>',
+            h1: '<span class="text-[10px] text-amber-300/90 font-black">自分2</span><span class="text-[8px] text-white/45">TAP / D&D</span>',
+            v0: '<span class="text-[9px] text-white/55 font-bold">相手1</span>',
+            v1: '<span class="text-[9px] text-white/55 font-bold">相手2</span>',
+            b0: '<span class="text-[8px] text-white/40 font-bold">FLOP</span>',
+            b1: '<span class="text-[8px] text-white/40 font-bold">FLOP</span>',
+            b2: '<span class="text-[8px] text-white/40 font-bold">FLOP</span>',
+            b3: '<span class="text-[8px] text-sky-300/50 font-bold">TURN</span>',
+            b4: '<span class="text-[8px] text-emerald-300/50 font-bold">RIVER</span>'
+          };
+          el.innerHTML = labels[slotKey];
+        }
+      });
+    }
+
+    function resetAllCards() {
+      SLOT_ORDER.forEach(k => state.slots[k] = null);
+      state.selectedSlot = 'h0';
+      state.lastResult = null;
+      renderAllSlots();
+      renderDeckStrip();
+      updateStreetAndHandStatus();
+      document.getElementById('equity-pill').classList.add('hidden');
+      highlightRecommendedAction(null);
+    }
+
+    function cardToInt(code) {
+      const r = RANK_VAL[code[0]] - 2;
+      const s = { s:0, h:1, d:2, c:3 }[code[1]];
+      return r * 4 + s;
+    }
+
+    function evaluateCards(ints) {
+      let rankCounts = new Int32Array(13);
+      let suitCounts = new Int32Array(4);
+      let suitMasks = new Int32Array(4);
+      let rankMask = 0;
+
+      for (let i = 0; i < ints.length; i++) {
+        const c = ints[i];
+        const r = (c >> 2);
+        const s = (c & 3);
+        rankCounts[r]++;
+        suitCounts[s]++;
+        suitMasks[s] |= (1 << r);
+        rankMask |= (1 << r);
+      }
+
+      let flushSuit = -1;
+      for (let s = 0; s < 4; s++) {
+        if (suitCounts[s] >= 5) { flushSuit = s; break; }
+      }
+
+      const findStraightHigh = (mask) => {
+        for (let hi = 12; hi >= 4; hi--) {
+          const seq = 0x1F << (hi - 4);
+          if ((mask & seq) === seq) return hi;
+        }
+        if ((mask & 0x100F) === 0x100F) return 3;
+        return -1;
+      };
+
+      if (flushSuit !== -1) {
+        const sfHigh = findStraightHigh(suitMasks[flushSuit]);
+        if (sfHigh !== -1) return 8000000 + sfHigh;
+      }
+
+      let quads = -1, trips = [], pairs = [], singles = [];
+      for (let r = 12; r >= 0; r--) {
+        const cnt = rankCounts[r];
+        if (cnt === 4) quads = r;
+        else if (cnt === 3) trips.push(r);
+        else if (cnt === 2) pairs.push(r);
+        else if (cnt === 1) singles.push(r);
+      }
+
+      if (quads !== -1) {
+        const kicker = Math.max(trips[0] ?? -1, pairs[0] ?? -1, singles[0] ?? -1);
+        return 7000000 + quads * 20 + kicker;
+      }
+
+      if (trips.length >= 2 || (trips.length === 1 && pairs.length >= 1)) {
+        const t = trips[0];
+        const p = trips.length >= 2 ? trips[1] : pairs[0];
+        return 6000000 + t * 20 + p;
+      }
+
+      if (flushSuit !== -1) {
+        let fMask = suitMasks[flushSuit];
+        let score = 5000000, picked = 0;
+        for (let r = 12; r >= 0 && picked < 5; r--) {
+          if (fMask & (1 << r)) {
+            score += r * Math.pow(15, 4 - picked);
+            picked++;
+          }
+        }
+        return score;
+      }
+
+      const stHigh = findStraightHigh(rankMask);
+      if (stHigh !== -1) return 4000000 + stHigh;
+
+      if (trips.length === 1) {
+        const k1 = singles[0] ?? 0, k2 = singles[1] ?? 0;
+        return 3000000 + trips[0] * 400 + k1 * 20 + k2;
+      }
+
+      if (pairs.length >= 2) {
+        const kicker = Math.max(pairs[2] ?? -1, singles[0] ?? -1);
+        return 2000000 + pairs[0] * 400 + pairs[1] * 20 + kicker;
+      }
+
+      if (pairs.length === 1) {
+        return 1000000 + pairs[0] * 4000 + (singles[0] ?? 0) * 250 + (singles[1] ?? 0) * 16 + (singles[2] ?? 0);
+      }
+
+      return (singles[0] ?? 0) * 50625 + (singles[1] ?? 0) * 3375 + (singles[2] ?? 0) * 225 + (singles[3] ?? 0) * 15 + (singles[4] ?? 0);
+    }
+
+    function getHandRankName(score) {
+      if (score >= 8000000) return 'ストレートフラッシュ';
+      if (score >= 7000000) return 'フォーカード';
+      if (score >= 6000000) return 'フルハウス';
+      if (score >= 5000000) return 'フラッシュ';
+      if (score >= 4000000) return 'ストレート';
+      if (score >= 3000000) return 'スリーカード';
+      if (score >= 2000000) return 'ツーペア';
+      if (score >= 1000000) return 'ワンペア';
+      return 'ハイカード';
+    }
+
+    function getBoardCards() {
+      return ['b0', 'b1', 'b2', 'b3', 'b4'].map(k => state.slots[k]).filter(Boolean);
+    }
+
+    function updateStreetAndHandStatus() {
+      const board = getBoardCards();
+      const streetBadge = document.getElementById('street-badge');
+      const potDisplay = document.getElementById('pot-display');
+      const madeHandEl = document.getElementById('hero-made-hand');
+
+      if (board.length === 0) {
+        streetBadge.textContent = 'PREFLOP';
+        potDisplay.textContent = '1.5 bb';
+      } else if (board.length <= 3) {
+        streetBadge.textContent = 'FLOP';
+        potDisplay.textContent = '5.0 bb';
+      } else if (board.length === 4) {
+        streetBadge.textContent = 'TURN';
+        potDisplay.textContent = '11.0 bb';
+      } else {
+        streetBadge.textContent = 'RIVER';
+        potDisplay.textContent = '22.0 bb';
+      }
+
+      if (state.slots.h0 && state.slots.h1) {
+        const heroInts = [state.slots.h0, state.slots.h1, ...board].map(cardToInt);
+        if (heroInts.length >= 5) {
+          const name = getHandRankName(evaluateCards(heroInts));
+          madeHandEl.textContent = `現在の役: ${name}`;
+        } else {
+          const r1 = state.slots.h0[0], r2 = state.slots.h1[0];
+          const suited = state.slots.h0[1] === state.slots.h1[1] ? 's' : (r1 === r2 ? '' : 'o');
+          madeHandEl.textContent = `ハンド: ${r1}${r2}${suited}`;
+        }
+      } else {
+        madeHandEl.textContent = 'カードを配置して解析';
+      }
+    }
+
+    function calculateEquity() {
+      const hInts = [cardToInt(state.slots.h0), cardToInt(state.slots.h1)];
+      const vInts = [cardToInt(state.slots.v0), cardToInt(state.slots.v1)];
+      const bInts = getBoardCards().map(cardToInt);
+
+      const used = new Set([...hInts, ...vInts, ...bInts]);
+      const deck = [];
+      for (let c = 0; c < 52; c++) {
+        if (!used.has(c)) deck.push(c);
+      }
+
+      const needed = 5 - bInts.length;
+      let wins = 0, ties = 0, total = 0;
+
+      if (needed === 0) {
+        const hs = evaluateCards([...hInts, ...bInts]);
+        const vs = evaluateCards([...vInts, ...bInts]);
+        if (hs > vs) wins = 1;
+        else if (hs === vs) ties = 1;
+        total = 1;
+      } else if (needed === 1) {
+        for (let i = 0; i < deck.length; i++) {
+          const board = [...bInts, deck[i]];
+          const hs = evaluateCards([...hInts, ...board]);
+          const vs = evaluateCards([...vInts, ...board]);
+          if (hs > vs) wins++;
+          else if (hs === vs) ties++;
+          total++;
+        }
+      } else if (needed === 2) {
+        for (let i = 0; i < deck.length - 1; i++) {
+          for (let j = i + 1; j < deck.length; j++) {
+            const board = [...bInts, deck[i], deck[j]];
+            const hs = evaluateCards([...hInts, ...board]);
+            const vs = evaluateCards([...vInts, ...board]);
+            if (hs > vs) wins++;
+            else if (hs === vs) ties++;
+            total++;
+          }
+        }
+      } else {
+        const iterations = 3500;
+        for (let it = 0; it < iterations; it++) {
+          for (let k = 0; k < needed; k++) {
+            const rnd = k + Math.floor(Math.random() * (deck.length - k));
+            const tmp = deck[k];
+            deck[k] = deck[rnd];
+            deck[rnd] = tmp;
+          }
+          const board = [...bInts, ...deck.slice(0, needed)];
+          const hs = evaluateCards([...hInts, ...board]);
+          const vs = evaluateCards([...vInts, ...board]);
+          if (hs > vs) wins++;
+          else if (hs === vs) ties++;
+          total++;
+        }
+      }
+
+      return ((wins + ties * 0.5) / total) * 100;
+    }
+
+    function computeStrategy() {
+      const equity = calculateEquity();
+      const board = getBoardCards();
+      const effStack = STACK_OPTIONS[state.effStackIndex];
+      const isSB = state.heroPos === 'SB';
+
+      const eqPill = document.getElementById('equity-pill');
+      eqPill.classList.remove('hidden');
+      eqPill.textContent = `勝率 ${equity.toFixed(1)}%`;
+
+      let recAction = 'call';
+      let recTitle = 'コール';
+      let recBBText = '1.0 bb';
+
+      let callLabel = board.length === 0 ? (isSB ? 'リンプ / コール' : 'チェック / コール') : 'チェック / コール';
+      let callBB = board.length === 0 ? (isSB ? '1.0 bb' : '2.0 bb') : '2.5 bb';
+      let raiseLabel = board.length === 0 ? 'レイズ' : 'ベット / レイズ';
+      let raiseBB = '2.5 bb';
+
+      if (board.length === 0) {
+        if (effStack <= 15 && equity >= 54) {
+          recAction = 'raise';
+          raiseLabel = 'オールイン';
+          raiseBB = `${effStack.toFixed(1)} bb`;
+          recTitle = raiseLabel;
+          recBBText = raiseBB;
+        } else if (equity >= 56) {
+          recAction = 'raise';
+          raiseLabel = isSB ? 'オープンレイズ' : '3ベット';
+          raiseBB = isSB ? '2.2 bb' : '6.5 bb';
+          recTitle = raiseLabel;
+          recBBText = raiseBB;
+        } else if (equity >= 41) {
+          recAction = 'call';
+          callLabel = isSB ? 'リンプ / コール' : 'コール';
+          callBB = isSB ? '1.0 bb' : '2.0 bb';
+          raiseBB = isSB ? '2.2 bb' : '6.0 bb';
+          recTitle = callLabel;
+          recBBText = callBB;
+        } else {
+          recAction = 'fold';
+          raiseBB = isSB ? '2.2 bb' : '6.0 bb';
+          recTitle = 'フォールド';
+          recBBText = '0 bb';
+        }
+      } else {
+        const potBB = board.length <= 3 ? 5.0 : (board.length === 4 ? 11.0 : 22.0);
+        if (equity >= 64) {
+          recAction = 'raise';
+          const betSize = Math.min(effStack, Math.round(potBB * 0.66 * 10) / 10);
+          raiseLabel = betSize >= effStack ? 'オールイン' : 'バリューベット';
+          raiseBB = `${betSize.toFixed(1)} bb`;
+          recTitle = raiseLabel;
+          recBBText = raiseBB;
+        } else if (equity >= 38) {
+          recAction = 'call';
+          const callSize = Math.round(potBB * 0.33 * 10) / 10;
+          const raiseSize = Math.min(effStack, Math.round(potBB * 0.75 * 10) / 10);
+          callLabel = 'チェック / コール';
+          callBB = `${callSize.toFixed(1)} bb`;
+          raiseBB = `${raiseSize.toFixed(1)} bb`;
+          recTitle = callLabel;
+          recBBText = callBB;
+        } else {
+          recAction = 'fold';
+          const bluffSize = Math.min(effStack, Math.round(potBB * 0.5 * 10) / 10);
+          callBB = `${(potBB * 0.33).toFixed(1)} bb`;
+          raiseLabel = 'ブラフレイズ';
+          raiseBB = `${bluffSize.toFixed(1)} bb`;
+          recTitle = 'フォールド';
+          recBBText = '0 bb';
+        }
+      }
+
+      document.getElementById('label-call').textContent = callLabel;
+      document.getElementById('bb-call').textContent = callBB;
+      document.getElementById('label-raise').textContent = raiseLabel;
+      document.getElementById('bb-raise').textContent = raiseBB;
+      highlightRecommendedAction(recAction);
+
+      state.lastResult = {
+        equity,
+        recAction,
+        recTitle,
+        recBBText,
+        street: board.length === 0 ? 'PREFLOP' : (board.length <= 3 ? 'FLOP' : (board.length === 4 ? 'TURN' : 'RIVER'))
+      };
+
+      return state.lastResult;
+    }
+
+    async function analyzeAndOpenResultModal() {
+      if (!state.slots.h0 || !state.slots.h1 || !state.slots.v0 || !state.slots.v1) {
+        alert('先に「自分2枚」と「相手2枚」のトランプカードを配置してください！');
+        return;
+      }
+
+      const res = computeStrategy();
+      const formatCard = (c) => `${c[0]}${SUITS[c[1]].symbol}`;
+
+      document.getElementById('modal-street-label').textContent = res.street;
+      document.getElementById('modal-hero-pos').textContent = `HERO (${state.heroPos})`;
+      document.getElementById('modal-villain-pos').textContent = `VILLAIN (${state.heroPos === 'SB' ? 'BB' : 'SB'})`;
+      document.getElementById('modal-hero-cards').textContent = `${formatCard(state.slots.h0)} ${formatCard(state.slots.h1)}`;
+      document.getElementById('modal-villain-cards').textContent = `${formatCard(state.slots.v0)} ${formatCard(state.slots.v1)}`;
+
+      document.getElementById('modal-winrate').innerHTML = `${res.equity.toFixed(1)}<span class="text-2xl text-emerald-400">%</span>`;
+      document.getElementById('modal-winrate-bar').style.width = `${Math.min(100, Math.max(0, res.equity))}%`;
+      document.getElementById('modal-rec-action').textContent = res.recTitle;
+      document.getElementById('modal-rec-bb').textContent = res.recBBText;
+
+      document.getElementById('result-modal').classList.remove('hidden');
+
+      if (state.geminiApiKey) {
+        callGeminiAPIForModal(res);
+      } else {
+        document.getElementById('modal-engine-status').textContent = 'POKER CHANCE ENGINE';
+      }
+    }
+
+    function closeResultModal() {
+      document.getElementById('result-modal').classList.add('hidden');
+    }
+
+    function highlightRecommendedAction(rec) {
+      const map = {
+        fold: { btn: 'act-fold', badge: 'badge-fold' },
+        call: { btn: 'act-call', badge: 'badge-call' },
+        raise: { btn: 'act-raise', badge: 'badge-raise' }
+      };
+
+      ['fold', 'call', 'raise'].forEach(key => {
+        const btn = document.getElementById(map[key].btn);
+        const badge = document.getElementById(map[key].badge);
+        if (key === rec) {
+          btn.classList.add('recommended-glow');
+          btn.classList.remove('opacity-75');
+          badge.textContent = '★ RECOMMENDED';
+          badge.className = 'text-[8.5px] font-black tracking-wider text-amber-300 uppercase';
+        } else {
+          btn.classList.remove('recommended-glow');
+          btn.classList.add('opacity-75');
+          badge.textContent = 'OPTION';
+          badge.className = 'text-[8.5px] font-black tracking-wider text-white/60 uppercase';
+        }
+      });
+    }
+
+    async function callGeminiAPIForModal(localRes) {
+      const statusEl = document.getElementById('modal-engine-status');
+      statusEl.textContent = 'GEMINI AI SYNCING...';
+
+      const boardStr = getBoardCards().join(' ') || 'なし（プリフロップ）';
+      const prompt = `トーナメント・ヘッズアップ（1対1）の状況です。説明文は一切不要です。以下のJSON形式のみで推奨アクションとBB表記を返してください。
+{"action":"フォールド または コール または ベット/レイズ","bb":"〇〇 bb"}
+- 自分ポジション: ${state.heroPos}
+- 有効スタック: ${STACK_OPTIONS[state.effStackIndex]}bb
+- 自分ハンド: ${state.slots.h0} ${state.slots.h1}
+- 相手ハンド: ${state.slots.v0} ${state.slots.v1}
+- ボード: ${boardStr}
+- 勝率: ${localRes.equity.toFixed(1)}%`;
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(state.geminiApiKey)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json" }
+          })
+        });
+        const data = await res.json();
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.action) document.getElementById('modal-rec-action').textContent = parsed.action;
+          if (parsed.bb) document.getElementById('modal-rec-bb').textContent = parsed.bb;
+          statusEl.textContent = 'GEMINI 2.5 FLASH CONNECTED';
+        } else {
+          statusEl.textContent = 'POKER CHANCE ENGINE';
+        }
+      } catch (err) {
+        statusEl.textContent = 'POKER CHANCE ENGINE';
+      }
+    }
+
+    function toggleApiModal() {
+      document.getElementById('api-modal').classList.toggle('hidden');
+    }
+
+    function saveApiKey() {
+      const val = document.getElementById('gemini-api-key-input').value.trim();
+      state.geminiApiKey = val;
+      localStorage.setItem('hu_gemini_api_key', val);
+      toggleApiModal();
+    }
+
+    init();
+  </script>
+</body>
+</html>
